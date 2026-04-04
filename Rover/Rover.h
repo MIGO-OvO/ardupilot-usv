@@ -446,6 +446,23 @@ public:
     // Simple mode
     float simple_sin_yaw;
 
+    // ---- USV payload telemetry (from companion computer) ----
+    struct {
+        float voltage;
+        float absorbance;
+        float pump_x;
+        float pump_y;
+        float pump_z;
+        float pump_a;
+        float status;
+        float pkt_count;
+        uint32_t last_update_ms;
+    } usv_payload;
+
+    // sensors.cpp – forward cached payload data to all GCS channels
+    void usv_telemetry_send();
+    // ---- end USV payload ----
+
 #if AP_ROVER_AUTO_ARM_ONCE_ENABLED
     struct {
         uint32_t last_arm_attempt_ms;

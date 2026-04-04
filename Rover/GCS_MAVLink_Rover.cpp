@@ -592,6 +592,37 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
         handle_set_position_target_global_int(msg);
         break;
 
+    // USV payload: cache NAMED_VALUE_FLOAT from companion computer,
+    // then re-send to all GCS via scheduler task usv_telemetry_send().
+    case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT: {
+        mavlink_named_value_float_t p;
+        mavlink_msg_named_value_float_decode(&msg, &p);
+        char name[11] {};
+        strncpy(name, p.name, sizeof(name) - 1);
+
+        if (strcmp(name, "USV_VOLT") == 0) {
+            rover.usv_payload.voltage = p.value;
+        } else if (strcmp(name, "USV_ABS") == 0) {
+            rover.usv_payload.absorbance = p.value;
+        } else if (strcmp(name, "PUMP_X") == 0) {
+            rover.usv_payload.pump_x = p.value;
+        } else if (strcmp(name, "PUMP_Y") == 0) {
+            rover.usv_payload.pump_y = p.value;
+        } else if (strcmp(name, "PUMP_Z") == 0) {
+            rover.usv_payload.pump_z = p.value;
+        } else if (strcmp(name, "PUMP_A") == 0) {
+            rover.usv_payload.pump_a = p.value;
+        } else if (strcmp(name, "USV_STAT") == 0) {
+            rover.usv_payload.status = p.value;
+        } else if (strcmp(name, "USV_PKT") == 0) {
+            rover.usv_payload.pkt_count = p.value;
+        }
+        rover.usv_payload.last_update_ms = AP_HAL::millis();
+        // fall through to base class for DataFlash logging
+        GCS_MAVLINK::handle_message(msg);
+        break;
+    }
+
     default:
         GCS_MAVLINK::handle_message(msg);
         break;
