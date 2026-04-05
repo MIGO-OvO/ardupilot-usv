@@ -1,6 +1,6 @@
  #!/usr/bin/env python3
  # -*- coding: utf-8 -*-
- """
+"""
  SITL 验证脚本 — 模拟 Nano 向飞控发送 NAMED_VALUE_FLOAT
  
  用法:
@@ -8,14 +8,14 @@
    2. 另开终端:   python3 Tools/scripts/test_sitl_usv.py
    3. QGC 连接 TCP 127.0.0.1:5760 → MAVLink Inspector 验证
  """
- from pymavlink import mavutil
- import time
- import sys
+from pymavlink import mavutil
+import time
+import sys
  
- SITL_ADDR = "tcp:127.0.0.1:5762"
+SITL_ADDR = "tcp:127.0.0.1:5762"
  
  
- def main():
+def main():
      print(f"Connecting to SITL at {SITL_ADDR} ...")
      conn = mavutil.mavlink_connection(SITL_ADDR)
      conn.wait_heartbeat()
@@ -43,5 +43,5 @@
          print("\nStopped.")
  
  
- if __name__ == "__main__":
+if __name__ == "__main__":
      main()

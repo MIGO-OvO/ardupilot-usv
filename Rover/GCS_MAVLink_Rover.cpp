@@ -617,6 +617,14 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
         } else if (strcmp(name, "USV_PKT") == 0) {
             rover.usv_payload.pkt_count = p.value;
         }
+
+        // one-time diagnostic: confirm data is arriving from companion
+        if (rover.usv_payload.last_update_ms == 0) {
+            GCS_SEND_TEXT(MAV_SEVERITY_INFO,
+                          "USV: first payload from %u/%u name=%s",
+                          msg.sysid, msg.compid, name);
+        }
+
         rover.usv_payload.last_update_ms = AP_HAL::millis();
         // fall through to base class for DataFlash logging
         GCS_MAVLINK::handle_message(msg);
