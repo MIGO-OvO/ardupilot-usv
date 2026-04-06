@@ -140,6 +140,14 @@ bool MAVLink_routing::check_and_forward(uint8_t framing_status,
         return true;
     }
 
+    // USV: Block forwarding of NAMED_VALUE_FLOAT from companion computer.
+    // These messages are cached in usv_payload and re-sent by usv_telemetry_send()
+    // at controlled rate. Forwarding them would double the bandwidth usage.
+    if (msg.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT) {
+        // process locally (cache in usv_payload), but don't forward to other links
+        return true;
+    }
+
     const bool from_private_channel = in_link.is_private();
 
     if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {

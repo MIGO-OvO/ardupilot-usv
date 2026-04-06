@@ -91,9 +91,11 @@ void Rover::read_rangefinders(void)
 
 /*
   forward cached USV payload telemetry to all GCS channels.
-  Called at 10 Hz from scheduler. Data is received from the companion
-  computer via NAMED_VALUE_FLOAT and cached in usv_payload struct
-  (see GCS_MAVLink_Rover.cpp handle_message).
+  Called at 2 Hz from scheduler (reduced from 10 Hz to avoid bandwidth saturation).
+  Data is received from the companion computer via NAMED_VALUE_FLOAT and cached
+  in usv_payload struct (see GCS_MAVLink_Rover.cpp handle_message).
+  Note: NAMED_VALUE_FLOAT forwarding is blocked in MAVLink_routing to prevent
+  double-sending the same data.
  */
 void Rover::usv_telemetry_send()
 {
