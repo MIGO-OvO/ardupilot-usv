@@ -593,6 +593,40 @@ bool ModeAuto::start_command(const AP_Mission::Mission_Command& cmd)
         do_guided_limits(cmd);
         break;
 
+    // USV: point sampling — pause mission, wait for companion ACK
+    case 31010: {
+        if (rover.mode_guided.enter()) {
+            _submode = SubMode::NavScriptTime;
+            nav_scripting.done = false;
+            nav_scripting.id++;
+            nav_scripting.start_ms = millis();
+            nav_scripting.command = 1;  // 1 = point sampling
+            nav_scripting.timeout_s = static_cast<uint8_t>(cmd.content.nav_script_time.timeout_s);
+            nav_scripting.arg1 = cmd.content.nav_script_time.arg1.get();  // loop_count
+            nav_scripting.arg2 = cmd.content.nav_script_time.arg2.get();  // hold_time
+            nav_scripting.arg3 = 0;
+            nav_scripting.arg4 = 0;
+            // notify companion computer
+            gcs().send_named_float("USV_SMPL", float(nav_scripting.id));
+            GCS_SEND_TEXT(MAV_SEVERITY_INFO, "USV: sampling id=%u loops=%.0f",
+                          nav_scripting.id, nav_scripting.arg1);
+        } else {
+            nav_scripting.done = true;
+        }
+        break;
+    }
+
+    // USV: start/stop survey — DO commands, do not pause mission
+    case 31015:
+        gcs().send_named_float("USV_SURV", 1.0f);
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "USV: survey started");
+        break;
+
+    case 31016:
+        gcs().send_named_float("USV_SURV", 0.0f);
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "USV: survey stopped");
+        break;
+
     default:
         // return false for unhandled commands
         return false;
@@ -705,7 +739,13 @@ bool ModeAuto::verify_command(const AP_Mission::Mission_Command& cmd)
     case MAV_CMD_DO_SET_REVERSE:
     case MAV_CMD_DO_FENCE_ENABLE:
     case MAV_CMD_DO_GUIDED_LIMITS:
+    case 31015:  // USV: start survey (DO command)
+    case 31016:  // USV: stop survey (DO command)
         return true;
+
+    // USV: point sampling — verify via NAV_SCRIPT_TIME mechanism
+    case 31010:
+        return verify_nav_script_time();
 
     default:
         // error message
