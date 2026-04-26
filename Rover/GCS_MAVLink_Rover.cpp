@@ -616,6 +616,16 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
             rover.usv_payload.status = p.value;
         } else if (strcmp(name, "USV_PKT") == 0) {
             rover.usv_payload.pkt_count = p.value;
+        } else if (strcmp(name, "USV_STEP") == 0) {
+            rover.usv_payload.automation_step = p.value;
+        } else if (strcmp(name, "USV_STOT") == 0) {
+            rover.usv_payload.automation_total = p.value;
+        } else if (strcmp(name, "USV_SCNT") == 0) {
+            rover.usv_payload.sample_count = p.value;
+        } else if (strcmp(name, "USV_PERR") == 0) {
+            rover.usv_payload.pid_error = p.value;
+        } else if (strcmp(name, "USV_PMOD") == 0) {
+            rover.usv_payload.pid_mode = p.value;
         } else if (strcmp(name, "USV_DONE") == 0) {
             // companion computer signals sampling complete
             rover.mode_auto.nav_script_time_done(static_cast<uint16_t>(p.value));

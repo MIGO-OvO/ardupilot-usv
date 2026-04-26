@@ -456,6 +456,11 @@ public:
         float pump_a;
         float status;
         float pkt_count;
+        float automation_step;
+        float automation_total;
+        float sample_count;
+        float pid_error;
+        float pid_mode;
         uint32_t last_update_ms;
     } usv_payload;
 
