@@ -461,6 +461,9 @@ public:
         float sample_count;
         float pid_error;
         float pid_mode;
+        float baseline_set;
+        float reference_voltage;
+        float baseline_voltage;
         uint32_t last_update_ms;
     } usv_payload;
 
