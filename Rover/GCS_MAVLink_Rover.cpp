@@ -626,6 +626,12 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
             rover.usv_payload.pid_error = p.value;
         } else if (strcmp(name, "USV_PMOD") == 0) {
             rover.usv_payload.pid_mode = p.value;
+        } else if (strcmp(name, "USV_BSET") == 0) {
+            rover.usv_payload.baseline_set = p.value;
+        } else if (strcmp(name, "USV_REF") == 0) {
+            rover.usv_payload.reference_voltage = p.value;
+        } else if (strcmp(name, "USV_BASE") == 0) {
+            rover.usv_payload.baseline_voltage = p.value;
         } else if (strcmp(name, "USV_DONE") == 0) {
             // companion computer signals sampling complete
             rover.mode_auto.nav_script_time_done(static_cast<uint16_t>(p.value));

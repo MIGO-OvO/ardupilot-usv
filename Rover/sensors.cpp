@@ -120,4 +120,7 @@ void Rover::usv_telemetry_send()
     gcs().send_named_float("USV_SCNT", usv_payload.sample_count);
     gcs().send_named_float("USV_PERR", usv_payload.pid_error);
     gcs().send_named_float("USV_PMOD", usv_payload.pid_mode);
+    gcs().send_named_float("USV_BSET", usv_payload.baseline_set);
+    gcs().send_named_float("USV_REF",  usv_payload.reference_voltage);
+    gcs().send_named_float("USV_BASE", usv_payload.baseline_voltage);
 }
