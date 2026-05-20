@@ -464,6 +464,7 @@ public:
         float baseline_set;
         float reference_voltage;
         float baseline_voltage;
+        float spectrometer_valid;
         uint32_t last_update_ms;
     } usv_payload;
 
