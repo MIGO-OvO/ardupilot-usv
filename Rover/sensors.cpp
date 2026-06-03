@@ -124,4 +124,9 @@ void Rover::usv_telemetry_send()
     gcs().send_named_float("USV_REF",  usv_payload.reference_voltage);
     gcs().send_named_float("USV_BASE", usv_payload.baseline_voltage);
     gcs().send_named_float("USV_VLD",  usv_payload.spectrometer_valid);
+    gcs().send_named_float("USV_JTMP", usv_payload.jetson_temp);
+    gcs().send_named_float("USV_ETMP", usv_payload.detector_temp);
+    gcs().send_named_float("USV_JCPU", usv_payload.jetson_cpu);
+    gcs().send_named_float("USV_JMEM", usv_payload.jetson_memory);
+    gcs().send_named_float("USV_EHEAP", usv_payload.detector_heap);
 }
