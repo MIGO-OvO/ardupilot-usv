@@ -634,6 +634,16 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
             rover.usv_payload.baseline_voltage = p.value;
         } else if (strcmp(name, "USV_VLD") == 0) {
             rover.usv_payload.spectrometer_valid = p.value;
+        } else if (strcmp(name, "USV_JTMP") == 0) {
+            rover.usv_payload.jetson_temp = p.value;
+        } else if (strcmp(name, "USV_ETMP") == 0) {
+            rover.usv_payload.detector_temp = p.value;
+        } else if (strcmp(name, "USV_JCPU") == 0) {
+            rover.usv_payload.jetson_cpu = p.value;
+        } else if (strcmp(name, "USV_JMEM") == 0) {
+            rover.usv_payload.jetson_memory = p.value;
+        } else if (strcmp(name, "USV_EHEAP") == 0) {
+            rover.usv_payload.detector_heap = p.value;
         } else if (strcmp(name, "USV_DONE") == 0) {
             // companion computer signals sampling complete
             rover.mode_auto.nav_script_time_done(static_cast<uint16_t>(p.value));

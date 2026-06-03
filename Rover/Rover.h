@@ -465,6 +465,11 @@ public:
         float reference_voltage;
         float baseline_voltage;
         float spectrometer_valid;
+        float jetson_temp;
+        float detector_temp;
+        float jetson_cpu;
+        float jetson_memory;
+        float detector_heap;
         uint32_t last_update_ms;
     } usv_payload;
 
