@@ -406,6 +406,19 @@ void ModeAuto::nav_script_time_done(uint16_t id)
 #endif
 }
 
+void ModeAuto::usv_sampling_failed(uint16_t id)
+{
+#if AP_SCRIPTING_ENABLED
+    if (rover.control_mode == this && _submode == SubMode::NavScriptTime &&
+        nav_scripting.command == 1 && id == nav_scripting.id) {
+        nav_scripting.done = false;
+        start_stop();
+        rover.set_mode(rover.mode_hold, ModeReason::FAILSAFE);
+        GCS_SEND_TEXT(MAV_SEVERITY_CRITICAL, "USV: sampling failed/cancelled, HOLD");
+    }
+#endif
+}
+
 // check for triggering of start of auto mode
 bool ModeAuto::check_trigger(void)
 {
@@ -1038,13 +1051,17 @@ void ModeAuto::do_guided_limits(const AP_Mission::Mission_Command& cmd)
 // start accepting position, velocity and acceleration targets from lua scripts
 void ModeAuto::do_nav_script_time(const AP_Mission::Mission_Command& cmd)
 {
+    // The command type must also be current when guided initialisation fails.
+    nav_scripting.command = cmd.content.nav_script_time.command;
     // call regular guided flight mode initialisation
     if (rover.mode_guided.enter()) {
         _submode = SubMode::NavScriptTime;
         nav_scripting.done = false;
         nav_scripting.id++;
+        if (nav_scripting.id == 0) {
+            nav_scripting.id++;
+        }
         nav_scripting.start_ms = millis();
-        nav_scripting.command = cmd.content.nav_script_time.command;
         nav_scripting.timeout_s = cmd.content.nav_script_time.timeout_s;
         nav_scripting.arg1 = cmd.content.nav_script_time.arg1.get();
         nav_scripting.arg2 = cmd.content.nav_script_time.arg2.get();
@@ -1055,6 +1072,13 @@ void ModeAuto::do_nav_script_time(const AP_Mission::Mission_Command& cmd)
             GCS_SEND_TEXT(MAV_SEVERITY_INFO, "USV: sampling id=%u", nav_scripting.id);
         }
     } else {
+        if (cmd.content.nav_script_time.command == 1) {
+            nav_scripting.done = false;
+            start_stop();
+            rover.set_mode(rover.mode_hold, ModeReason::FAILSAFE);
+            GCS_SEND_TEXT(MAV_SEVERITY_CRITICAL, "USV: sampling start failed, HOLD");
+            return;
+        }
         // for safety we set nav_scripting to done to protect against the mission getting stuck
         nav_scripting.done = true;
     }
@@ -1063,6 +1087,23 @@ void ModeAuto::do_nav_script_time(const AP_Mission::Mission_Command& cmd)
 // check if verify_nav_script_time command has completed
 bool ModeAuto::verify_nav_script_time()
 {
+    if (nav_scripting.command == 1) {
+        const uint32_t now = AP_HAL::millis();
+        const uint32_t elapsed = now - nav_scripting.start_ms;
+        const uint32_t timeout_ms = uint32_t(nav_scripting.timeout_s > 0 ? nav_scripting.timeout_s : 255) * 1000U;
+        const bool link_lost = elapsed > 3000U &&
+            (rover.usv_payload.last_update_ms == 0 || now - rover.usv_payload.last_update_ms > 3000U);
+        if (elapsed > timeout_ms || link_lost) {
+            // A timeout/lost companion is not a successful sample or an explicit SKIP.
+            nav_scripting.done = false;
+            start_stop();
+            rover.set_mode(rover.mode_hold, ModeReason::FAILSAFE);
+            gcs().send_named_float("USV_FAIL", float(nav_scripting.id));
+            GCS_SEND_TEXT(MAV_SEVERITY_CRITICAL, "USV: sampling timeout/link loss, HOLD");
+            return false;
+        }
+        return nav_scripting.done;
+    }
     // if done or timeout then return true
     if (nav_scripting.done ||
         ((nav_scripting.timeout_s > 0) &&

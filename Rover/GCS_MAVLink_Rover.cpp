@@ -595,8 +595,14 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
     // USV payload: cache NAMED_VALUE_FLOAT from companion computer,
     // then re-send to all GCS via scheduler task usv_telemetry_send().
     case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT: {
+        if (msg.sysid != mavlink_system.sysid || msg.compid != MAV_COMP_ID_ONBOARD_COMPUTER) {
+            break;
+        }
         mavlink_named_value_float_t p;
         mavlink_msg_named_value_float_decode(&msg, &p);
+        if (!isfinite(p.value)) {
+            break;
+        }
         char name[11] {};
         strncpy(name, p.name, sizeof(name) - 1);
 
@@ -644,9 +650,20 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
             rover.usv_payload.jetson_memory = p.value;
         } else if (strcmp(name, "USV_EHEAP") == 0) {
             rover.usv_payload.detector_heap = p.value;
-        } else if (strcmp(name, "USV_DONE") == 0) {
+        } else if (strcmp(name, "USV_DONE") == 0 || strcmp(name, "USV_FAIL") == 0) {
             // companion computer signals sampling complete
-            rover.mode_auto.nav_script_time_done(static_cast<uint16_t>(p.value));
+            if (p.value < 1 || p.value > 65535 || p.value > floorf(p.value)) {
+                break;
+            }
+            if (strcmp(name, "USV_FAIL") == 0) {
+                rover.mode_auto.usv_sampling_failed(static_cast<uint16_t>(p.value));
+            } else {
+                rover.mode_auto.nav_script_time_done(static_cast<uint16_t>(p.value));
+            }
+            GCS_MAVLINK::handle_message(msg);
+            break; // completion messages must not keep measurement telemetry alive
+        } else {
+            break; // unrelated named values do not refresh the payload watchdog
         }
 
         // one-time diagnostic: confirm data is arriving from companion
