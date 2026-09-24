@@ -288,6 +288,7 @@ public:
     // lua accessors for nav script time support
     bool nav_script_time(uint16_t &id, uint8_t &cmd, float &arg1, float &arg2, int16_t &arg3, int16_t &arg4);
     void nav_script_time_done(uint16_t id);
+    void usv_sampling_failed(uint16_t id);
 
     // 
     void init_reversed_flag() override {
