@@ -458,6 +458,8 @@ public:
         float pkt_count;
         float automation_step;
         float automation_total;
+        float current_loop;
+        float total_loops;
         float sample_count;
         float pid_error;
         float pid_mode;
