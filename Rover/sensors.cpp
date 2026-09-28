@@ -117,6 +117,8 @@ void Rover::usv_telemetry_send()
     gcs().send_named_float("USV_PKT",  usv_payload.pkt_count);
     gcs().send_named_float("USV_STEP", usv_payload.automation_step);
     gcs().send_named_float("USV_STOT", usv_payload.automation_total);
+    gcs().send_named_float("USV_LOOP", usv_payload.current_loop);
+    gcs().send_named_float("USV_LTOT", usv_payload.total_loops);
     gcs().send_named_float("USV_SCNT", usv_payload.sample_count);
     gcs().send_named_float("USV_PERR", usv_payload.pid_error);
     gcs().send_named_float("USV_PMOD", usv_payload.pid_mode);
