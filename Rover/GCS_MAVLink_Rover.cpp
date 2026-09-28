@@ -626,6 +626,10 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
             rover.usv_payload.automation_step = p.value;
         } else if (strcmp(name, "USV_STOT") == 0) {
             rover.usv_payload.automation_total = p.value;
+        } else if (strcmp(name, "USV_LOOP") == 0) {
+            rover.usv_payload.current_loop = p.value;
+        } else if (strcmp(name, "USV_LTOT") == 0) {
+            rover.usv_payload.total_loops = p.value;
         } else if (strcmp(name, "USV_SCNT") == 0) {
             rover.usv_payload.sample_count = p.value;
         } else if (strcmp(name, "USV_PERR") == 0) {
