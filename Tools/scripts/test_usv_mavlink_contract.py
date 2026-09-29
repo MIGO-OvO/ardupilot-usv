@@ -41,6 +41,17 @@ class USVMavlinkContractTests(unittest.TestCase):
 
         self.assertNotIn('"USV_BASE"', mode_auto)
 
+    def test_loop_forwarding_remains_inside_three_second_freshness_guard(self):
+        sensors = (REPO_ROOT / "Rover" / "sensors.cpp").read_text(encoding="utf-8")
+        body = sensors.split('void Rover::usv_telemetry_send()', 1)[1]
+        self.assertIn('if (usv_payload.last_update_ms == 0) {\n        return;', body)
+        stale = 'if (AP_HAL::millis() - usv_payload.last_update_ms > 3000) {\n        return;'
+        self.assertIn(stale, body)
+        for field in ('USV_LOOP', 'USV_LTOT', 'USV_STEP', 'USV_STOT', 'USV_SCNT'):
+            self.assertLess(body.index(stale), body.index('gcs().send_named_float("' + field + '"'))
+        scheduler = (REPO_ROOT / "Rover" / "Rover.cpp").read_text(encoding="utf-8")
+        self.assertRegex(scheduler, r'SCHED_TASK\(usv_telemetry_send,\s+2,')
+
 
 if __name__ == "__main__":
     unittest.main()
