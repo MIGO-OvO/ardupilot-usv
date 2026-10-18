@@ -99,36 +99,10 @@ void Rover::read_rangefinders(void)
  */
 void Rover::usv_telemetry_send()
 {
-    // do not send if no data received yet, or data is stale (>3 s)
-    if (usv_payload.last_update_ms == 0) {
-        return;
+    for (uint8_t i = 0; i < gcs().num_gcs(); i++) {
+        GCS_MAVLINK_Rover *link = gcs().chan(i);
+        if (link != nullptr && link->is_active()) {
+            link->send_usv_payload();
+        }
     }
-    if (AP_HAL::millis() - usv_payload.last_update_ms > 3000) {
-        return;
-    }
-
-    gcs().send_named_float("USV_VOLT", usv_payload.voltage);
-    gcs().send_named_float("USV_ABS",  usv_payload.absorbance);
-    gcs().send_named_float("PUMP_X",   usv_payload.pump_x);
-    gcs().send_named_float("PUMP_Y",   usv_payload.pump_y);
-    gcs().send_named_float("PUMP_Z",   usv_payload.pump_z);
-    gcs().send_named_float("PUMP_A",   usv_payload.pump_a);
-    gcs().send_named_float("USV_STAT", usv_payload.status);
-    gcs().send_named_float("USV_PKT",  usv_payload.pkt_count);
-    gcs().send_named_float("USV_STEP", usv_payload.automation_step);
-    gcs().send_named_float("USV_STOT", usv_payload.automation_total);
-    gcs().send_named_float("USV_LOOP", usv_payload.current_loop);
-    gcs().send_named_float("USV_LTOT", usv_payload.total_loops);
-    gcs().send_named_float("USV_SCNT", usv_payload.sample_count);
-    gcs().send_named_float("USV_PERR", usv_payload.pid_error);
-    gcs().send_named_float("USV_PMOD", usv_payload.pid_mode);
-    gcs().send_named_float("USV_BSET", usv_payload.baseline_set);
-    gcs().send_named_float("USV_REF",  usv_payload.reference_voltage);
-    gcs().send_named_float("USV_BASE", usv_payload.baseline_voltage);
-    gcs().send_named_float("USV_VLD",  usv_payload.spectrometer_valid);
-    gcs().send_named_float("USV_JTMP", usv_payload.jetson_temp);
-    gcs().send_named_float("USV_ETMP", usv_payload.detector_temp);
-    gcs().send_named_float("USV_JCPU", usv_payload.jetson_cpu);
-    gcs().send_named_float("USV_JMEM", usv_payload.jetson_memory);
-    gcs().send_named_float("USV_EHEAP", usv_payload.detector_heap);
 }

@@ -20,6 +20,7 @@
 #include <cmath>
 #include <stdarg.h>
 #include <stdint.h>
+#include "USVPayload.h"
 
 // Libraries
 #include <AP_Common/AP_Common.h>
@@ -447,33 +448,7 @@ public:
     float simple_sin_yaw;
 
     // ---- USV payload telemetry (from companion computer) ----
-    struct {
-        float voltage;
-        float absorbance;
-        float pump_x;
-        float pump_y;
-        float pump_z;
-        float pump_a;
-        float status;
-        float pkt_count;
-        float automation_step;
-        float automation_total;
-        float current_loop;
-        float total_loops;
-        float sample_count;
-        float pid_error;
-        float pid_mode;
-        float baseline_set;
-        float reference_voltage;
-        float baseline_voltage;
-        float spectrometer_valid;
-        float jetson_temp;
-        float detector_temp;
-        float jetson_cpu;
-        float jetson_memory;
-        float detector_heap;
-        uint32_t last_update_ms;
-    } usv_payload;
+    USVPayload usv_payload;
 
     // sensors.cpp – forward cached payload data to all GCS channels
     void usv_telemetry_send();

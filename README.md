@@ -1,5 +1,13 @@
 # ArduPilot Project
 
+## USV downstream payload safety (2026-10)
+
+This MIGO-OvO fork uses 26 companion payload fields in `Rover/USVPayload.h`, including `USV_LOOP/LTOT/ADS/PROTO`. Each field has its own 3-second age; receiving pump angles cannot renew a stale measurement. Only finite values from this vehicle's system ID/component 191 are cached. `USV_DONE/USV_FAIL` do not renew payload freshness.
+
+Each GCS link maintains an independent round-robin cursor; insufficient transmit space does not advance the pending field. The 2 Hz scheduler, mission success/SKIP gate, timeout/link-loss HOLD, and MANUAL/RTL takeover policy remain intact. Versioned `USVE1:` STATUSTEXT events retain source 191 and chunk identities through the existing router.
+
+Tests: `tests/test_usv_payload_cache.py`, `tests/test_usv_sampling_safety.py`, `tests/check_usv_sitl_sampling.py --scenario all`, and `tests/check_usv_sitl_event_routing.py` with a freshly built SITL binary. Update with matching ROS/QGC/DetFirmware; software tests and Pixhawk6C compilation are not hardware or vessel acceptance. This downstream change is AI-assisted and is not submitted to upstream ArduPilot.
+
 [![Discord](https://img.shields.io/discord/674039678562861068.svg)](https://ardupilot.org/discord)
 
 [![Test Copter](https://github.com/ArduPilot/ardupilot/workflows/test%20copter/badge.svg?branch=master)](https://github.com/ArduPilot/ardupilot/actions/workflows/test_sitl_copter.yml) [![Test Plane](https://github.com/ArduPilot/ardupilot/workflows/test%20plane/badge.svg?branch=master)](https://github.com/ArduPilot/ardupilot/actions/workflows/test_sitl_plane.yml) [![Test Rover](https://github.com/ArduPilot/ardupilot/workflows/test%20rover/badge.svg?branch=master)](https://github.com/ArduPilot/ardupilot/actions/workflows/test_sitl_rover.yml) [![Test Sub](https://github.com/ArduPilot/ardupilot/workflows/test%20sub/badge.svg?branch=master)](https://github.com/ArduPilot/ardupilot/actions/workflows/test_sitl_sub.yml) [![Test Tracker](https://github.com/ArduPilot/ardupilot/workflows/test%20tracker/badge.svg?branch=master)](https://github.com/ArduPilot/ardupilot/actions/workflows/test_sitl_tracker.yml)

@@ -15,6 +15,8 @@ public:
 
     using GCS_MAVLINK::GCS_MAVLINK;
 
+    void send_usv_payload();
+
 protected:
 
     MAV_RESULT _handle_command_preflight_calibration(const mavlink_command_int_t &packet, const mavlink_message_t &msg) override;
@@ -38,6 +40,8 @@ protected:
     uint8_t send_available_mode(uint8_t index) const override;
 
 private:
+
+    uint8_t usv_payload_cursor = 0;
 
     void handle_message(const mavlink_message_t &msg) override;
     bool handle_guided_request(AP_Mission::Mission_Command &cmd) override;
