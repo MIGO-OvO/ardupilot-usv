@@ -606,55 +606,7 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
         char name[11] {};
         strncpy(name, p.name, sizeof(name) - 1);
 
-        if (strcmp(name, "USV_VOLT") == 0) {
-            rover.usv_payload.voltage = p.value;
-        } else if (strcmp(name, "USV_ABS") == 0) {
-            rover.usv_payload.absorbance = p.value;
-        } else if (strcmp(name, "PUMP_X") == 0) {
-            rover.usv_payload.pump_x = p.value;
-        } else if (strcmp(name, "PUMP_Y") == 0) {
-            rover.usv_payload.pump_y = p.value;
-        } else if (strcmp(name, "PUMP_Z") == 0) {
-            rover.usv_payload.pump_z = p.value;
-        } else if (strcmp(name, "PUMP_A") == 0) {
-            rover.usv_payload.pump_a = p.value;
-        } else if (strcmp(name, "USV_STAT") == 0) {
-            rover.usv_payload.status = p.value;
-        } else if (strcmp(name, "USV_PKT") == 0) {
-            rover.usv_payload.pkt_count = p.value;
-        } else if (strcmp(name, "USV_STEP") == 0) {
-            rover.usv_payload.automation_step = p.value;
-        } else if (strcmp(name, "USV_STOT") == 0) {
-            rover.usv_payload.automation_total = p.value;
-        } else if (strcmp(name, "USV_LOOP") == 0) {
-            rover.usv_payload.current_loop = p.value;
-        } else if (strcmp(name, "USV_LTOT") == 0) {
-            rover.usv_payload.total_loops = p.value;
-        } else if (strcmp(name, "USV_SCNT") == 0) {
-            rover.usv_payload.sample_count = p.value;
-        } else if (strcmp(name, "USV_PERR") == 0) {
-            rover.usv_payload.pid_error = p.value;
-        } else if (strcmp(name, "USV_PMOD") == 0) {
-            rover.usv_payload.pid_mode = p.value;
-        } else if (strcmp(name, "USV_BSET") == 0) {
-            rover.usv_payload.baseline_set = p.value;
-        } else if (strcmp(name, "USV_REF") == 0) {
-            rover.usv_payload.reference_voltage = p.value;
-        } else if (strcmp(name, "USV_BASE") == 0) {
-            rover.usv_payload.baseline_voltage = p.value;
-        } else if (strcmp(name, "USV_VLD") == 0) {
-            rover.usv_payload.spectrometer_valid = p.value;
-        } else if (strcmp(name, "USV_JTMP") == 0) {
-            rover.usv_payload.jetson_temp = p.value;
-        } else if (strcmp(name, "USV_ETMP") == 0) {
-            rover.usv_payload.detector_temp = p.value;
-        } else if (strcmp(name, "USV_JCPU") == 0) {
-            rover.usv_payload.jetson_cpu = p.value;
-        } else if (strcmp(name, "USV_JMEM") == 0) {
-            rover.usv_payload.jetson_memory = p.value;
-        } else if (strcmp(name, "USV_EHEAP") == 0) {
-            rover.usv_payload.detector_heap = p.value;
-        } else if (strcmp(name, "USV_DONE") == 0 || strcmp(name, "USV_FAIL") == 0) {
+        if (strcmp(name, "USV_DONE") == 0 || strcmp(name, "USV_FAIL") == 0) {
             // companion computer signals sampling complete
             if (p.value < 1 || p.value > 65535 || p.value > floorf(p.value)) {
                 break;
@@ -666,18 +618,19 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
             }
             GCS_MAVLINK::handle_message(msg);
             break; // completion messages must not keep measurement telemetry alive
-        } else {
-            break; // unrelated named values do not refresh the payload watchdog
         }
 
+        const bool first_payload = rover.usv_payload.seen == 0;
+        if (!rover.usv_payload.update(name, p.value, AP_HAL::millis())) {
+            break; // unrelated named values do not refresh the payload watchdog
+        }
         // one-time diagnostic: confirm data is arriving from companion
-        if (rover.usv_payload.last_update_ms == 0) {
+        if (first_payload) {
             GCS_SEND_TEXT(MAV_SEVERITY_INFO,
                           "USV: first payload from %u/%u name=%s",
                           msg.sysid, msg.compid, name);
         }
 
-        rover.usv_payload.last_update_ms = AP_HAL::millis();
         // fall through to base class for DataFlash logging
         GCS_MAVLINK::handle_message(msg);
         break;
@@ -686,6 +639,21 @@ void GCS_MAVLINK_Rover::handle_message(const mavlink_message_t &msg)
     default:
         GCS_MAVLINK::handle_message(msg);
         break;
+    }
+}
+
+void GCS_MAVLINK_Rover::send_usv_payload()
+{
+    const uint32_t now_ms = AP_HAL::millis();
+    for (uint8_t checked = 0; checked < USVPayload::FIELD_COUNT; checked++) {
+        const uint8_t index = usv_payload_cursor;
+        if (rover.usv_payload.fresh(index, now_ms)) {
+            if (!HAVE_PAYLOAD_SPACE(chan, NAMED_VALUE_FLOAT)) {
+                return; // Keep this link's next unsent field, not a global cursor.
+            }
+            send_named_float(USVPayload::name(index), rover.usv_payload.values[index]);
+        }
+        usv_payload_cursor = (index + 1) % USVPayload::FIELD_COUNT;
     }
 }
 
