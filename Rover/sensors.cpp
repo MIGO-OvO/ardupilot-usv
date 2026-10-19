@@ -101,8 +101,14 @@ void Rover::usv_telemetry_send()
 {
     for (uint8_t i = 0; i < gcs().num_gcs(); i++) {
         GCS_MAVLINK_Rover *link = gcs().chan(i);
-        if (link != nullptr && link->is_active()) {
-            link->send_usv_payload();
+        if (link == nullptr || link->is_private() || !link->is_active()) {
+            continue;
         }
+#if HAL_HIGH_LATENCY2_ENABLED
+        if (link->is_high_latency_link) {
+            continue;
+        }
+#endif
+        link->send_usv_payload();
     }
 }
